@@ -98,3 +98,12 @@ func (c *Client) AddSheet(ctx context.Context, title string, index int) (int64, 
 
 	return resp.Replies[0].AddSheet.Properties.SheetId, nil
 }
+
+// Builder creates a new Builder instance ready to execute against this client's spreadsheet.
+func (c *Client) Builder() *Builder {
+	b := NewBuilder()
+
+	b.executor = NewBatchUpdateExecutor(c.service, c.spreadID, 100)
+
+	return b
+}

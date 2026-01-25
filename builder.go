@@ -1,6 +1,7 @@
 package haresheet
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 // Builder builds a batch of requests for Google Sheets API.
 type Builder struct {
+	executor *BatchUpdateExecutor
 	requests []*sheets.Request
 	errs     []error
 
@@ -20,6 +22,7 @@ type Builder struct {
 // NewBuilder creates a new Builder instance.
 func NewBuilder() *Builder {
 	return &Builder{
+		executor:   nil,
 		requests:   make([]*sheets.Request, 0, 100),
 		errs:       make([]error, 0, 10),
 		propFields: make([]string, 0, 5),
@@ -256,4 +259,57 @@ func (b *Builder) DeleteSheet(sheetIDs ...int64) *Builder {
 	}
 
 	return b
+}
+
+// WithTrace sets the tracer to the underlying executor.
+func (b *Builder) WithTrace(trace *ClientTrace) *Builder {
+	if b.executor != nil {
+		b.executor.Trace = trace
+	}
+
+	return b
+}
+
+// WithLimit sets the batch limit to the underlying executor.
+func (b *Builder) WithLimit(limit int) *Builder {
+	if b.executor != nil {
+		b.executor.limit = limit
+	}
+
+	return b
+}
+
+// Flush executes the batched requests.
+func (b *Builder) Flush(ctx context.Context) error {
+	requests, err := b.Requests()
+	if err != nil {
+		return err
+	}
+
+	if len(requests) == 0 {
+		return nil
+	}
+
+	if b.executor == nil {
+		return fmt.Errorf("Flush: cannot flush builder without a client")
+	}
+
+	b.executor.Queue(ctx, requests, "")
+
+	err = b.executor.Flush(ctx)
+	if err != nil {
+		return fmt.Errorf("Flush: failed to flush builder: %w", err)
+	}
+
+	b.Reset()
+
+	return nil
+}
+
+// Reset clears the pending requests in the builder.
+func (b *Builder) Reset() {
+	b.requests = make([]*sheets.Request, 0)
+	b.errs = make([]error, 0)
+	b.props = nil
+	b.propFields = make([]string, 0)
 }
