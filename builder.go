@@ -124,6 +124,30 @@ func (b *Builder) Sheet(sheetID int64) *SheetBuilder {
 	return sb
 }
 
+// AddSheet adds a request to create a new sheet with a SPECIFIC ID and INDEX.
+// Pass index: -1 to append to the end.
+func (b *Builder) AddSheet(sheetID int64, title string, index int) *Builder {
+	props := &sheets.SheetProperties{
+		SheetId: sheetID,
+		Title:   title,
+	}
+
+	if index >= 0 {
+		props.Index = int64(index)
+		props.ForceSendFields = []string{"Index"}
+	}
+
+	req := &sheets.Request{
+		AddSheet: &sheets.AddSheetRequest{
+			Properties: props,
+		},
+	}
+
+	b.requests = append(b.requests, req)
+
+	return b
+}
+
 // CopySheet copies a source sheet to create multiple new sheets.
 func (b *Builder) CopySheet(srcSheetID int64, toIndex int, newNames ...string) *Builder {
 	if srcSheetID < 0 {
