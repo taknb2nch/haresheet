@@ -1,6 +1,7 @@
 package haresheet
 
 import (
+	"context"
 	"fmt"
 
 	"google.golang.org/api/sheets/v4"
@@ -16,6 +17,11 @@ type RowBuilder struct {
 // Requests
 func (rb *RowBuilder) Requests() ([]*sheets.Request, error) {
 	return rb.sb.b.Requests()
+}
+
+// Flush executes the batched requests.
+func (rb *RowBuilder) Flush(ctx context.Context) error {
+	return rb.sb.Flush(ctx)
 }
 
 // Hide makes the rows invisible.
