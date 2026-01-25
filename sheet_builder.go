@@ -1,6 +1,7 @@
 package haresheet
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -16,6 +17,11 @@ type SheetBuilder struct {
 // Requests
 func (sb *SheetBuilder) Requests() ([]*sheets.Request, error) {
 	return sb.b.Requests()
+}
+
+// Flush executes the batched requests.
+func (sb *SheetBuilder) Flush(ctx context.Context) error {
+	return sb.b.Flush(ctx)
 }
 
 // Row returns a builder object for row operations.
