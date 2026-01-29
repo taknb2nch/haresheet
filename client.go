@@ -7,6 +7,12 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
+// SpreadInfo holds metadata about the spreadsheet.
+type SpreadInfo struct {
+	ID    string
+	Title string
+}
+
 // SheetInfo holds metadata for a specific sheet.
 type SheetInfo struct {
 	ID    int64
@@ -49,6 +55,26 @@ func (c *Client) GetSheetInfoMap(ctx context.Context) (map[string]*SheetInfo, er
 	}
 
 	return m, nil
+}
+
+// GetInfo returns metadata about the spreadsheet.
+func (c *Client) GetInfo(ctx context.Context) (*SpreadInfo, error) {
+	resp, err := c.service.Spreadsheets.Get(c.spreadID).
+		Fields("spreadsheetId,properties(title)").
+		Context(ctx).
+		Do()
+	if err != nil {
+		return nil, fmt.Errorf("GetInfo: failed to fetch spreadsheet info: %w", err)
+	}
+
+	if resp.Properties == nil {
+		return nil, fmt.Errorf("GetInfo: properties are missing")
+	}
+
+	return &SpreadInfo{
+		ID:    resp.SpreadsheetId,
+		Title: resp.Properties.Title,
+	}, nil
 }
 
 // Sheet

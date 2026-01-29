@@ -123,3 +123,32 @@ func (sc *SheetClient) checkRectInvalid(row int, col int, height int, width int,
 
 	return nil
 }
+
+// GetGridSize returns the current grid dimensions (rows and columns) of this sheet.
+func (s *SheetClient) GetGridSize(ctx context.Context) (rowCount, colCount int, err error) {
+	resp, err := s.c.service.Spreadsheets.Get(s.c.spreadID).
+		Fields("sheets(properties(sheetId,gridProperties))").
+		Context(ctx).
+		Do()
+	if err != nil {
+		return 0, 0, fmt.Errorf("GetGridSize: failed to fetch spreadsheet info: %w", err)
+	}
+
+	for _, sheet := range resp.Sheets {
+		if sheet.Properties == nil {
+			continue
+		}
+
+		if sheet.Properties.SheetId == s.sheetID {
+			if sheet.Properties.GridProperties == nil {
+				return 0, 0, fmt.Errorf("GetGridSize: grid properties are missing for sheet %d", s.sheetID)
+			}
+
+			props := sheet.Properties.GridProperties
+
+			return int(props.RowCount), int(props.ColumnCount), nil
+		}
+	}
+
+	return 0, 0, fmt.Errorf("GetGridSize: sheet %d not found", s.sheetID)
+}
