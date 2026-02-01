@@ -394,6 +394,36 @@ func (sb *SheetBuilder) SetRowValues(row int, col int, values []any) *SheetBuild
 	return sb
 }
 
+// SetColValues sets values vertically starting from the specified cell.
+// It automatically converts a 1D slice into a vertical 2D slice.
+func (sb *SheetBuilder) SetColValues(row int, col int, values []any) *SheetBuilder {
+	if row < 0 {
+		sb.b.appendError(fmt.Errorf("SetColValues: invalid row: %d", row))
+
+		return sb
+	}
+
+	if col < 0 {
+		sb.b.appendError(fmt.Errorf("SetColValues: invalid col: %d", col))
+
+		return sb
+	}
+
+	if len(values) == 0 {
+		sb.b.appendError(errors.New("SetColValues: values should not be nil or empty"))
+
+		return sb
+	}
+
+	verticalData := make([][]any, len(values))
+
+	for i, v := range values {
+		verticalData[i] = []any{v}
+	}
+
+	return sb.SetRangeValues(row, col, verticalData)
+}
+
 // SetRangeValues
 func (sb *SheetBuilder) SetRangeValues(row int, col int, values [][]any) *SheetBuilder {
 	if row < 0 {
