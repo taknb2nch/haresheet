@@ -13,7 +13,7 @@ type SheetClient struct {
 	err     error
 }
 
-func (sc *SheetClient) getValues(ctx context.Context, row int, col int, height int, width int) ([][]interface{}, error) {
+func (sc *SheetClient) getValues(ctx context.Context, row int, col int, height int, width int) ([][]any, error) {
 	rng := &sheets.GridRange{
 		SheetId:          sc.sheetID,
 		StartRowIndex:    int64(row),
@@ -89,7 +89,7 @@ func (sc *SheetClient) getValues(ctx context.Context, row int, col int, height i
 }
 
 // GetRangeValues retrieves values using SheetID via DataFilter (ID直指定版)
-func (sc *SheetClient) GetRangeValues(ctx context.Context, row int, col int, height int, width int) ([][]interface{}, error) {
+func (sc *SheetClient) GetRangeValues(ctx context.Context, row int, col int, height int, width int) ([][]any, error) {
 	if sc.err != nil {
 		return nil, sc.err
 	}
@@ -103,7 +103,7 @@ func (sc *SheetClient) GetRangeValues(ctx context.Context, row int, col int, hei
 }
 
 // GetColValues retrieves values from a specific column.
-func (sc *SheetClient) GetColValues(ctx context.Context, col, width, skipRows int) ([][]interface{}, error) {
+func (sc *SheetClient) GetColValues(ctx context.Context, col, width, skipRows int) ([][]any, error) {
 	if sc.err != nil {
 		return nil, sc.err
 	}
@@ -124,7 +124,7 @@ func (sc *SheetClient) GetColValues(ctx context.Context, col, width, skipRows in
 }
 
 // GetRowValues retrieves values from a specific row.
-func (sc *SheetClient) GetRowValues(ctx context.Context, row, height, skipCols int) ([][]interface{}, error) {
+func (sc *SheetClient) GetRowValues(ctx context.Context, row, height, skipCols int) ([][]any, error) {
 	if sc.err != nil {
 		return nil, sc.err
 	}
