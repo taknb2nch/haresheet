@@ -120,7 +120,7 @@ func (sc *SheetClient) GetColValues(ctx context.Context, col, width, skipRows in
 		return nil, fmt.Errorf("GetColValues: invalid skipRows: %d", skipRows)
 	}
 
-	return sc.getValues(ctx, skipRows, col, toEnd, width)
+	return sc.getValues(ctx, skipRows, col, rangeUnset, width)
 }
 
 // GetRowValues retrieves values from a specific row.
@@ -141,7 +141,7 @@ func (sc *SheetClient) GetRowValues(ctx context.Context, row, height, skipCols i
 		return nil, fmt.Errorf("GetRowValues: invalid skipCols: %d", skipCols)
 	}
 
-	return sc.getValues(ctx, row, skipCols, height, toEnd)
+	return sc.getValues(ctx, row, skipCols, height, rangeUnset)
 }
 
 func (sc *SheetClient) checkRectInvalid(row int, col int, height int, width int, label string) error {
@@ -153,11 +153,11 @@ func (sc *SheetClient) checkRectInvalid(row int, col int, height int, width int,
 		return fmt.Errorf("%s: invalid col: %d", label, col)
 	}
 
-	if height < 0 && height != toEnd {
+	if height < 0 && height != rangeUnset {
 		return fmt.Errorf("%s: invalid height: %d", label, height)
 	}
 
-	if width < 0 && width != toEnd {
+	if width < 0 && width != rangeUnset {
 		return fmt.Errorf("%s: invalid width: %d", label, width)
 	}
 

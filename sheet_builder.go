@@ -903,23 +903,41 @@ func (sb *SheetBuilder) updateDimension(dimension string, start int, count int, 
 	return sb
 }
 
-// toEnd represents a value indicating extension to the end of the dimension.
-const toEnd = -1
+// RangeUnset represents a value indicating that the range parameter
+const rangeUnset = -1
 
 // clearValues creates a request to clear values.
 func (sb *SheetBuilder) clearValues(row int, col int, height int, width int) *SheetBuilder {
 	rng := &sheets.GridRange{
-		SheetId:          sb.sheetID,
-		StartRowIndex:    int64(row),
-		StartColumnIndex: int64(col),
+		SheetId: sb.sheetID,
+	}
+
+	if row >= 0 {
+		rng.StartRowIndex = int64(row)
+	}
+
+	if col >= 0 {
+		rng.StartColumnIndex = int64(col)
 	}
 
 	if height > 0 {
-		rng.EndRowIndex = int64(row + height)
+		start := int64(0)
+
+		if row > 0 {
+			start = int64(row)
+		}
+
+		rng.EndRowIndex = start + int64(height)
 	}
 
 	if width > 0 {
-		rng.EndColumnIndex = int64(col + width)
+		start := int64(0)
+
+		if col > 0 {
+			start = int64(col)
+		}
+
+		rng.EndColumnIndex = start + int64(width)
 	}
 
 	req := &sheets.Request{
@@ -933,6 +951,11 @@ func (sb *SheetBuilder) clearValues(row int, col int, height int, width int) *Sh
 	sb.b.AppendRequest(req)
 
 	return sb
+}
+
+// ClearAllValues clears all values in the sheet.
+func (sb *SheetBuilder) ClearAllValues() *SheetBuilder {
+	return sb.clearValues(rangeUnset, rangeUnset, rangeUnset, rangeUnset)
 }
 
 // ClearRangeValues clears values in the specified rectangle.
@@ -964,7 +987,7 @@ func (sb *SheetBuilder) ClearColValues(col int, width int, skipRows int) *SheetB
 		return sb
 	}
 
-	return sb.clearValues(skipRows, col, toEnd, width)
+	return sb.clearValues(skipRows, col, rangeUnset, width)
 }
 
 // ClearRowValues clears values in the specified rows.
@@ -987,7 +1010,7 @@ func (sb *SheetBuilder) ClearRowValues(row int, height int, skipCols int) *Sheet
 		return sb
 	}
 
-	return sb.clearValues(row, skipCols, height, toEnd)
+	return sb.clearValues(row, skipCols, height, rangeUnset)
 }
 
 func (sb *SheetBuilder) isRectInvalid(rect *Rect, label string, name string) bool {
@@ -1009,13 +1032,13 @@ func (sb *SheetBuilder) isRectInvalid(rect *Rect, label string, name string) boo
 		return true
 	}
 
-	if rect.Height < 0 && rect.Height != toEnd {
+	if rect.Height < 0 && rect.Height != rangeUnset {
 		sb.b.appendError(fmt.Errorf("%s: invalid %s.Height: %d", label, name, rect.Height))
 
 		return true
 	}
 
-	if rect.Width < 0 && rect.Width != toEnd {
+	if rect.Width < 0 && rect.Width != rangeUnset {
 		sb.b.appendError(fmt.Errorf("%s: invalid %s.Width: %d", label, name, rect.Width))
 
 		return true
