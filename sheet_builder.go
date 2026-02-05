@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"google.golang.org/api/sheets/v4"
 )
@@ -1045,4 +1046,69 @@ func (sb *SheetBuilder) isRectInvalid(rect *Rect, label string, name string) boo
 	}
 
 	return false
+}
+
+// freeze creates a request to freeze rows and/or columns.
+// If a parameter is rangeUnset, it is ignored (not updated).
+func (sb *SheetBuilder) freeze(rows int, cols int) *SheetBuilder {
+	gridProps := &sheets.GridProperties{}
+
+	var fields []string
+
+	if rows < rangeUnset {
+		sb.b.appendError(fmt.Errorf("freeze: invalid rows: %d", rows))
+
+		return sb
+	} else if rows > rangeUnset {
+		gridProps.FrozenRowCount = int64(rows)
+
+		fields = append(fields, "gridProperties.frozenRowCount")
+	}
+
+	if cols < rangeUnset {
+		sb.b.appendError(fmt.Errorf("freeze: invalid cols: %d", cols))
+
+		return sb
+	} else if cols > rangeUnset {
+		gridProps.FrozenColumnCount = int64(cols)
+
+		fields = append(fields, "gridProperties.frozenColumnCount")
+	}
+
+	if len(fields) == 0 {
+		return sb
+	}
+
+	req := &sheets.Request{
+		UpdateSheetProperties: &sheets.UpdateSheetPropertiesRequest{
+			Properties: &sheets.SheetProperties{
+				SheetId:        sb.sheetID,
+				GridProperties: gridProps,
+			},
+			Fields: strings.Join(fields, ","),
+		},
+	}
+
+	sb.b.AppendRequest(req)
+
+	return sb
+}
+
+// Freeze freezes the specified number of rows and columns.
+// To leave a dimension unchanged, pass rangeUnset (or use FreezeRows/FreezeCols).
+// Passing 0 unfreezes the dimension.
+func (sb *SheetBuilder) Freeze(rows int, cols int) *SheetBuilder {
+	return sb.freeze(rows, cols)
+}
+
+// FreezeRows freezes the first n rows.
+// Pass 0 to unfreeze rows. Columns remain unchanged.
+func (sb *SheetBuilder) FreezeRows(rows int) *SheetBuilder {
+	return sb.freeze(rows, rangeUnset)
+}
+
+// FreezeCols freezes the first n columns.
+// Pass 0 to unfreeze columns. Rows remain unchanged.
+func (sb *SheetBuilder) FreezeCols(cols int) *SheetBuilder {
+	return sb.freeze(rangeUnset, cols)
 }
