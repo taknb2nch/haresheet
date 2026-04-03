@@ -148,7 +148,7 @@ func (sb *SheetBuilder) FillDownFrom(srcSheetID int64, src *Rect, dstR int, dstC
 	}
 
 	if dstC < 0 {
-		sb.b.appendError(fmt.Errorf("FillDownFrom: invalid dst column: %d", dstR))
+		sb.b.appendError(fmt.Errorf("FillDownFrom: invalid dst column: %d", dstC))
 
 		return sb
 	}
@@ -175,6 +175,72 @@ func (sb *SheetBuilder) FillDownFrom(srcSheetID int64, src *Rect, dstR int, dstC
 		EndRowIndex:      int64(dstR + height), // ★ここがポイント
 		StartColumnIndex: int64(dstC),
 		EndColumnIndex:   int64(dstC + src.Width),
+	}
+
+	if pasteType == "" {
+		pasteType = PasteTypeNormal
+	}
+
+	req := &sheets.Request{
+		CopyPaste: &sheets.CopyPasteRequest{
+			Source:           srcRange,
+			Destination:      dstRange,
+			PasteType:        string(pasteType),
+			PasteOrientation: "NORMAL",
+		},
+	}
+
+	sb.b.AppendRequest(req)
+
+	return sb
+}
+
+// FillRightFrom copies the content from srcRect and repeats it rightwards to fill the specified width.
+func (sb *SheetBuilder) FillRightFrom(srcSheetID int64, src *Rect, dstR int, dstC int, width int, pasteType PasteType) *SheetBuilder {
+	if srcSheetID < 0 {
+		sb.b.appendError(fmt.Errorf("FillRightFrom: invalid src sheet id: %d", srcSheetID))
+
+		return sb
+	}
+
+	if sb.isRectInvalid(src, "FillRightFrom", "src") {
+		return sb
+	}
+
+	if dstR < 0 {
+		sb.b.appendError(fmt.Errorf("FillRightFrom: invalid dst row: %d", dstR))
+
+		return sb
+	}
+
+	if dstC < 0 {
+		sb.b.appendError(fmt.Errorf("FillRightFrom: invalid dst column: %d", dstC))
+
+		return sb
+	}
+
+	if width <= 0 {
+		sb.b.appendError(fmt.Errorf("FillRightFrom: invalid width: %d", width))
+
+		return sb
+	}
+
+	srcRange := &sheets.GridRange{
+		SheetId:          srcSheetID,
+		StartRowIndex:    int64(src.Row),
+		EndRowIndex:      int64(src.Row + src.Height),
+		StartColumnIndex: int64(src.Col),
+		EndColumnIndex:   int64(src.Col + src.Width),
+	}
+
+	// 貼り付け先 (開始位置 + 幅)
+	// Destinationの列幅を Source の倍数にすることで、APIが自動でリピート処理を行います
+	dstRange := &sheets.GridRange{
+		SheetId:          int64(sb.sheetID),
+		StartRowIndex:    int64(dstR),
+		EndRowIndex:      int64(dstR + src.Height),
+		StartColumnIndex: int64(dstC),
+		EndColumnIndex:   int64(dstC + width), // ★ここがポイント
 	}
 
 	if pasteType == "" {
