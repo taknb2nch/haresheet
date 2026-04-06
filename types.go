@@ -1,5 +1,8 @@
 package haresheet
 
+// RangeUnset represents a value indicating that the range parameter
+const rangeUnset = -1
+
 // PasteType defines the type of content to paste.
 type PasteType string
 
@@ -25,6 +28,24 @@ type ShiftDimensionType string
 const (
 	ShiftDimensionTypeRows    ShiftDimensionType = "ROWS"    // 行方向（削除したら下から上に詰める）
 	ShiftDimensionTypeColumns ShiftDimensionType = "COLUMNS" // 列方向（削除したら右から左に詰める）
+)
+
+// HorizontalAlign represents the horizontal alignment of text in a cell.
+type HorizontalAlign string
+
+const (
+	HorizontalAlignLeft   HorizontalAlign = "LEFT"
+	HorizontalAlignCenter HorizontalAlign = "CENTER"
+	HorizontalAlignRight  HorizontalAlign = "RIGHT"
+)
+
+// VerticalAlign represents the vertical alignment of text in a cell.
+type VerticalAlign string
+
+const (
+	VerticalAlignTop    VerticalAlign = "TOP"
+	VerticalAlignMiddle VerticalAlign = "MIDDLE"
+	VerticalAlignBottom VerticalAlign = "BOTTOM"
 )
 
 type Rect struct {
