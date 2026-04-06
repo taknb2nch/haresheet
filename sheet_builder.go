@@ -970,9 +970,6 @@ func (sb *SheetBuilder) updateDimension(dimension string, start int, count int, 
 	return sb
 }
 
-// RangeUnset represents a value indicating that the range parameter
-const rangeUnset = -1
-
 // clearValues creates a request to clear values.
 func (sb *SheetBuilder) clearValues(row int, col int, height int, width int) *SheetBuilder {
 	rng := &sheets.GridRange{
@@ -1177,4 +1174,75 @@ func (sb *SheetBuilder) FreezeRows(rows int) *SheetBuilder {
 // Pass 0 to unfreeze columns. Rows remain unchanged.
 func (sb *SheetBuilder) FreezeCols(cols int) *SheetBuilder {
 	return sb.freeze(rangeUnset, cols)
+}
+
+// SetTextAlign sets the horizontal and vertical alignment of text in a specified range.
+// Pass an empty string ("") to hAlign or vAlign to leave it unchanged.
+func (sb *SheetBuilder) SetTextAlign(row int, col int, height int, width int, hAlign HorizontalAlign, vAlign VerticalAlign) *SheetBuilder {
+	rng := &sheets.GridRange{
+		SheetId: sb.sheetID,
+	}
+
+	if row != rangeUnset {
+		rng.StartRowIndex = int64(row)
+	}
+
+	if col != rangeUnset {
+		rng.StartColumnIndex = int64(col)
+	}
+
+	if height != rangeUnset {
+		start := int64(0)
+
+		if row != rangeUnset {
+			start = int64(row)
+		}
+
+		rng.EndRowIndex = start + int64(height)
+	}
+
+	if width != rangeUnset {
+		start := int64(0)
+
+		if col != rangeUnset {
+			start = int64(col)
+		}
+
+		rng.EndColumnIndex = start + int64(width)
+	}
+
+	format := &sheets.CellFormat{}
+
+	var fields []string
+
+	if hAlign != "" {
+		format.HorizontalAlignment = string(hAlign)
+
+		fields = append(fields, "userEnteredFormat.horizontalAlignment")
+	}
+
+	if vAlign != "" {
+		format.VerticalAlignment = string(vAlign)
+
+		fields = append(fields, "userEnteredFormat.verticalAlignment")
+	}
+
+	// 変更するプロパティがなければ何もしない
+	if len(fields) == 0 {
+		return sb
+	}
+
+	req := &sheets.Request{
+		RepeatCell: &sheets.RepeatCellRequest{
+			Range: rng,
+			Cell: &sheets.CellData{
+				UserEnteredFormat: format,
+			},
+			Fields: strings.Join(fields, ","),
+		},
+	}
+
+	sb.b.AppendRequest(req)
+
+	return sb
 }
